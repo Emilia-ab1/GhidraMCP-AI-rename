@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 工具/ghidra_11.3.2_PUBLIC_20250415_3.zip
 工具/jdk-21_windows-x64_bin.exe
+*.zip
