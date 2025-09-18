@@ -105,6 +105,18 @@ def fetch_all_functions(pattern: str, batch_size: int) -> list:
         time.sleep(0.1)
     return all_funcs
 
+def get_all_methods_count(timeout: float = 1.5) -> int:
+    """获取全部方法数量：methods?offset=0&limit=999999 的行数"""
+    try:
+        url = f"{ghidra_server_url}/methods?offset=0&limit=999999"
+        resp = requests.get(url, timeout=timeout)
+        if not resp.ok:
+            return 0
+        lines = resp.text.splitlines() if resp.text else []
+        return len(lines)
+    except Exception:
+        return 0
+
 def analyze_function(decompiled_code: str, client, model_name: str) -> Optional[str]:
     """使用AI模型分析反编译代码并生成合适的函数名"""
     if not decompiled_code or len(decompiled_code.strip()) == 0:
@@ -142,18 +154,43 @@ def analyze_function(decompiled_code: str, client, model_name: str) -> Optional[
         print(f"AI API调用失败: {str(e)}")
         return None
 
-def process_functions(config: dict, client, model_name: str, functions: list):
-    """批量处理函数重命名（基于预取的函数列表，带进度条）"""
+def process_functions(config: dict, client, model_name: str, functions: list, on_log=None, on_progress=None, stop_event=None):
+    """批量处理函数重命名（基于预取的函数列表，带进度/日志回调）"""
     consecutive_failures = 0  # 初始化连续失败计数器
     max_consecutive_failures = 10 # 最大连续失败次数
 
-    total = len(functions)
+    total = len(functions)  # 注意：这里的 total 表示“需处理的函数量”
     processed = 0
+
+    # 回调包装
+    def emit_log(text: str):
+        try:
+            if on_log:
+                on_log(text)
+            else:
+                print(text)
+        except Exception:
+            # 回调异常不应影响主流程
+            print(text)
+
+    def emit_progress(done: int, all_count: int):
+        try:
+            if on_progress:
+                on_progress(done, all_count)
+            else:
+                print_progress(done, all_count)
+        except Exception:
+            print_progress(done, all_count)
+
     try:
         for func_name in functions:
+            if stop_event is not None and getattr(stop_event, "is_set", lambda: False)():
+                emit_log("\n收到停止信号，提前结束处理。")
+                break
+
             if not func_name or not func_name.strip():
                 processed += 1
-                print_progress(processed, total)
+                emit_progress(processed, total)
                 continue
 
             # 提取纯函数名（移除@后的地址信息）
@@ -163,33 +200,33 @@ def process_functions(config: dict, client, model_name: str, functions: list):
                 # 获取反编译代码
                 decompiled = decompile_function(clean_func_name)
                 if not decompiled:
-                    print(f"\n跳过 {func_name}: 无反编译结果")
+                    emit_log(f"\n跳过 {func_name}: 无反编译结果")
                     processed += 1
-                    print_progress(processed, total)
+                    emit_progress(processed, total)
                     continue
 
                 # 检查是否是真正的错误（而不是反编译结果）
                 if decompiled.startswith("Error") or decompiled.startswith("Request failed"):
-                    print(f"\n跳过 {func_name}: {decompiled}")
+                    emit_log(f"\n跳过 {func_name}: {decompiled}")
                     processed += 1
-                    print_progress(processed, total)
+                    emit_progress(processed, total)
                     continue
 
-                print(f"\n正在分析函数: {func_name}")
+                emit_log(f"\n正在分析函数: {func_name}")
                 # 只显示函数签名和开头部分
                 first_line = decompiled.split('\n')[0]
-                print(f"函数签名: {first_line}")
-                print("----------------------------------------")
+                emit_log(f"函数签名: {first_line}")
+                emit_log("----------------------------------------")
 
                 # AI分析并重命名
                 new_name = analyze_function(decompiled, client, model_name)
                 if not new_name:
-                    print(f"跳过 {func_name}: AI分析失败或返回无效函数名")
+                    emit_log(f"跳过 {func_name}: AI分析失败或返回无效函数名")
                     consecutive_failures += 1
                     if consecutive_failures >= max_consecutive_failures:
-                        print(f"\n连续 {max_consecutive_failures} 次AI调用失败或返回无效名称。")
-                        print("请检查您的API密钥是否正确或网络连接是否正常。脚本将停止。")
-                        sys.exit(1) # 退出脚本
+                        emit_log(f"\n连续 {max_consecutive_failures} 次AI调用失败或返回无效名称。")
+                        emit_log("请检查您的API密钥是否正确或网络连接是否正常。脚本将停止。")
+                        break
                 else:
                     consecutive_failures = 0 # AI调用成功，重置计数器
 
@@ -200,21 +237,73 @@ def process_functions(config: dict, client, model_name: str, functions: list):
 
                     result = rename_function(clean_func_name, new_name)
                     if "Error" not in result:
-                        print(f"重命名成功: {func_name} -> {new_name}")
+                        emit_log(f"重命名成功: {func_name} -> {new_name}")
                     else:
-                        print(f"重命名失败 {func_name}: {result}")
+                        emit_log(f"重命名失败 {func_name}: {result}")
 
             except Exception as e:
-                print(f"处理函数 {func_name} 时出错: {str(e)}")
+                emit_log(f"处理函数 {func_name} 时出错: {str(e)}")
 
             # 添加延迟避免API限制
             time.sleep(config['delay'])
 
             processed += 1
-            print_progress(processed, total)
+            emit_progress(processed, total)
 
     except Exception as e:
-        print(f"批处理过程出错: {str(e)}")
+        emit_log(f"批处理过程出错: {str(e)}")
+
+
+def run_rename(api_key: str, api_base: str, model_name: str, function_pattern: str, batch_size: int, delay_seconds: float, on_log=None, on_progress=None, stop_event=None):
+    """
+    供GUI调用的入口：执行预取与批量处理，并通过回调输出日志与进度。
+    进度分母 = 需处理的函数量（即匹配关键词的数量）。
+    """
+    # 配置OpenAI客户端
+    client = OpenAI(
+        api_key=api_key,
+        base_url=api_base
+    )
+
+    config = {
+        'function_pattern': function_pattern,
+        'batch_size': batch_size,
+        'delay': delay_seconds,
+    }
+
+    # 预取所有函数（需处理的函数量）
+    functions = fetch_all_functions(config['function_pattern'], config['batch_size'])
+    need_total = len(functions)
+
+    # 同时统计总函数量
+    all_methods_total = get_all_methods_count()
+
+    if on_log:
+        on_log("开始批量处理函数重命名...")
+        on_log(f"配置信息:")
+        on_log(f"- 总函数量(固定): {all_methods_total}")
+        on_log(f"- 需处理函数量: {need_total}")
+        on_log(f"- 函数名模式: {config['function_pattern']}")
+        on_log(f"- 批处理大小: {config['batch_size']}")
+        on_log(f"- 处理延迟: {config['delay']}秒")
+        on_log("-" * 50)
+
+    if need_total == 0:
+        if on_log:
+            on_log("无可处理函数，退出。")
+        if on_progress:
+            on_progress(0, 0)
+        return
+
+    # 初始进度（运行前应为0）
+    if on_progress:
+        on_progress(0, need_total)
+
+    process_functions(config, client, model_name, functions, on_log=on_log, on_progress=on_progress, stop_event=stop_event)
+
+    if on_log:
+        on_log("处理完成")
+
 
 def main():
     # 尝试加载.env文件
@@ -228,7 +317,7 @@ def main():
             print("未找到.env文件，将使用默认配置")
     
     # OpenAI配置 - 优先从环境变量读取，如不存在则使用默认值
-    openai_api_key = os.environ.get("OPENAI_API_KEY", "sk-idlqtpxbswtfnuzrendbmrwgepaskdahjcgwdzrpvhbxexxx")
+    openai_api_key = os.environ.get("OPENAI_API_KEY", "sk-idlqtpxbswtfnuzrendbmrwgepaskdahjcgwdzrpvhbxeorg")
     openai_api_base = os.environ.get("OPENAI_API_BASE", "https://api.siliconflow.cn/")
     model_name = os.environ.get("OPENAI_MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
     

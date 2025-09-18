@@ -4,5 +4,4 @@ mcp>=1.6.0
 typing
 python-dotenv
 PyQt6
-PyQt6-WebEngine
 #pip install -r requirements.txt
