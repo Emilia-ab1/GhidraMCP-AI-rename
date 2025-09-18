@@ -1,6 +1,6 @@
 import sys
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont, QPalette, QColor
+from PyQt6.QtGui import QFont, QPalette, QColor, QIcon
 from PyQt6.QtWidgets import (
     QApplication,
     QFormLayout,
@@ -80,8 +80,9 @@ class MainWindow(QMainWindow):
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Ghidra AI Rename - 设置")
+        self.setWindowTitle("Ghidra-AI重命名  by：GuanYue233")
         self.setMinimumSize(800, 520)
+        self.setWindowIcon(QIcon("res/logo.ico"))
 
         self._is_running = False
         self._stop_event = None
@@ -371,6 +372,7 @@ class MainWindow(QMainWindow):
 
 def main() -> None:
     app = QApplication(sys.argv)
+    app.setWindowIcon(QIcon("res/logo.ico"))
     window = MainWindow()
     window.show()
     sys.exit(app.exec())

@@ -281,7 +281,7 @@ def run_rename(api_key: str, api_base: str, model_name: str, function_pattern: s
     if on_log:
         on_log("开始批量处理函数重命名...")
         on_log(f"配置信息:")
-        on_log(f"- 总函数量(固定): {all_methods_total}")
+        on_log(f"- 总函数量: {all_methods_total}")
         on_log(f"- 需处理函数量: {need_total}")
         on_log(f"- 函数名模式: {config['function_pattern']}")
         on_log(f"- 批处理大小: {config['batch_size']}")
@@ -303,55 +303,3 @@ def run_rename(api_key: str, api_base: str, model_name: str, function_pattern: s
 
     if on_log:
         on_log("处理完成")
-
-
-def main():
-    # 尝试加载.env文件
-    if has_dotenv:
-        # 获取脚本所在目录的.env文件
-        env_path = os.path.join(script_dir, ".env")
-        if os.path.exists(env_path):
-            load_dotenv(env_path)
-            print(f"已从 {env_path} 加载环境变量配置")
-        else:
-            print("未找到.env文件，将使用默认配置")
-    
-    # OpenAI配置 - 优先从环境变量读取，如不存在则使用默认值
-    openai_api_key = os.environ.get("OPENAI_API_KEY", "sk-idlqtpxbswtfnuzrendbmrwgepaskdahjcgwdzrpvhbxeorg")
-    openai_api_base = os.environ.get("OPENAI_API_BASE", "https://api.siliconflow.cn/")
-    model_name = os.environ.get("OPENAI_MODEL_NAME", "Qwen/Qwen2.5-72B-Instruct")
-    
-    print(f"使用模型: {model_name}")
-    
-    # 配置OpenAI客户端
-    client = OpenAI(
-        api_key=openai_api_key,
-        base_url=openai_api_base
-    )
-    # 函数特征配置
-    config = {
-        'function_pattern': "FUN_",  # 要搜索的函数名模式
-        'batch_size': 50,           # 每批处理的函数数量
-        'delay': 1.0,              # 处理每个函数之间的延迟时间（秒）
-    }
-    print("开始批量处理函数重命名...")
-    print(f"配置信息:")
-    print(f"- 函数名模式: {config['function_pattern']}")
-    print(f"- 批处理大小: {config['batch_size']}")
-    print(f"- 处理延迟: {config['delay']}秒")
-    print("-" * 50)
-    # 预取所有函数以统计总数并显示进度
-    functions = fetch_all_functions(config['function_pattern'], config['batch_size'])
-    total = len(functions)
-    print(f"共找到 {total} 个函数")
-    if total == 0:
-        print("无可处理函数，退出。")
-        return
-
-    # 初始化进度条
-    print_progress(0, total)
-    process_functions(config, client, model_name, functions)
-    print("\n处理完成")
-
-if __name__ == "__main__":
-    main()

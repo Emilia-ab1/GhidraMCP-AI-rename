@@ -50,14 +50,20 @@ Write-Info "安装 PyInstaller"
 Write-Info "运行 PyInstaller 构建"
 $pyi = Join-Path $venvPath "Scripts\pyinstaller.exe"
 
+# 5)删除旧的打包文件
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$scriptDir\dist"
+Remove-Item -Recurse -Force -ErrorAction SilentlyContinue "$scriptDir\build"
+
 # 若 spec 存在，优先使用；否则用命令行参数构建
 $specPath = Join-Path $scriptDir "ghidra_ai_gui.spec"
 if (Test-Path $specPath) {
     & $pyi "$specPath"
 } else {
     & $pyi --noconfirm --noconsole --name "Ghidra-AI-Rename-GUI" `
+        --icon "res\logo.ico" `
         --add-data "ai_rename.py;." `
         --add-data "startup_checker.py;." `
+        --add-data "res\logo.ico;res" `
         --hidden-import PyQt6 --hidden-import PyQt6.QtCore --hidden-import PyQt6.QtGui --hidden-import PyQt6.QtWidgets `
         --hidden-import openai --hidden-import requests --hidden-import mcp.server.fastmcp --hidden-import dotenv `
         "ghidra_ai_gui.py"
