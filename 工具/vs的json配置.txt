@@ -30,24 +30,5 @@ cursor
       "args": [
         "C:\\Users\\Administrator\\Downloads\\Compressed\\ghidra_11.3.1_PUBLIC_20250219\\自动解析ghidra脚本\\Ghidra\\脚本\\bridge_mcp_ghidra.py"
       ]
-    },
-    "operateMysql": {
-      "isActive": true,
-      "name": "operateMysql",
-      "type": "stdio",
-      "command": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
-      "args": [
-              "E:\\GitHub项目\\mysql_mcp_server_pro\\src\\server.py", 
-              "--stdio"
-            ],
-            "env": {
-              "MYSQL_HOST": "api.guanyue233.cn",
-              "MYSQL_PORT": "33306",
-              "MYSQL_USER": "api",
-              "MYSQL_PASSWORD": "~XbVJuvg2zWVa36",
-              "MYSQL_DATABASE": "api",
-              "MYSQL_ROLE": "admin"
-           }
-        }
-      }
+    }
 }
