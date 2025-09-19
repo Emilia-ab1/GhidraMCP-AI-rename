@@ -60,9 +60,9 @@ class ConfigManager:
         except Exception:
             pass
         return {
-            "last_selected_profile": "Default",
+            "last_selected_profile": "默认",
             "profiles": {
-                "Default": {
+                "默认": {
                     "api_key": "",
                     "api_base": "https://api.siliconflow.cn/",
                     "model_name": "Qwen/Qwen2.5-72B-Instruct",

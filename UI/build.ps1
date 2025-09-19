@@ -36,7 +36,7 @@ if (!(Test-Path $venvPython)) {
 $reqFile = Join-Path $scriptDir "requirements.txt"
 if (Test-Path $reqFile) {
     Write-Info "安装依赖: requirements.txt"
-    & $venvPython -m pip install -r "$reqFile"
+    #& $venvPython -m pip install -r "$reqFile"
 } else {
     Write-Err "未找到 requirements.txt"
     exit 1
