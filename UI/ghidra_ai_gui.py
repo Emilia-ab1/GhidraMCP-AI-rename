@@ -211,6 +211,12 @@ class MainWindow(QMainWindow):
     logAppended = pyqtSignal(str)
     progressUpdated = pyqtSignal(int, int)
 
+    BUTTON_STYLES = {
+        'blue': "QPushButton { background-color: #007AFF; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #0056b3; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
+        'red': "QPushButton { background-color: #DC3545; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #C82333; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
+        'yellow': "QPushButton { background-color: #FFC110; color: black; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #E0A800; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
+    }
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("Ghidra-AI重命名  by：GuanYue233")
@@ -256,6 +262,7 @@ class MainWindow(QMainWindow):
         self.current_profile_display = QLineEdit()
         self.current_profile_display.setReadOnly(True)
         self.btn_select_profile = QPushButton("选择配置")
+        self.btn_select_profile.setStyleSheet(self.BUTTON_STYLES['blue'])
         self.btn_select_profile.clicked.connect(self._open_profile_selector)
         profile_row_layout.addWidget(self.current_profile_display, 1)
         profile_row_layout.addWidget(self.btn_select_profile)
@@ -274,8 +281,10 @@ class MainWindow(QMainWindow):
         profile_actions_layout = QHBoxLayout()
         profile_actions_layout.addStretch()
         self.btn_save_config = QPushButton("保存当前配置")
+        self.btn_save_config.setStyleSheet(self.BUTTON_STYLES['blue'])
         self.btn_save_config.clicked.connect(self._save_profile)
         self.btn_delete_config = QPushButton("删除当前配置")
+        self.btn_delete_config.setStyleSheet(self.BUTTON_STYLES['red'])
         self.btn_delete_config.clicked.connect(self._delete_profile)
         profile_actions_layout.addWidget(self.btn_save_config)
         profile_actions_layout.addWidget(self.btn_delete_config)
@@ -343,6 +352,7 @@ class MainWindow(QMainWindow):
         self.label_status.setMinimumWidth(120)
         row_status.addWidget(self.label_status)
         self.btn_refresh = QPushButton("刷新")
+        self.btn_refresh.setStyleSheet(self.BUTTON_STYLES['blue'])
         self.btn_refresh.setMinimumWidth(60)
         self.btn_refresh.clicked.connect(self._start_async_check)
         row_status.addWidget(self.btn_refresh)
@@ -350,8 +360,10 @@ class MainWindow(QMainWindow):
         row_ctrl = QHBoxLayout()
         row_ctrl.setSpacing(8)
         self.btn_start = QPushButton("开始重命名")
+        self.btn_start.setStyleSheet(self.BUTTON_STYLES['blue'])
         self.btn_start.setMinimumWidth(80)
         self.btn_stop = QPushButton("停止")
+        self.btn_stop.setStyleSheet(self.BUTTON_STYLES['yellow'])
         self.btn_stop.setMinimumWidth(60)
         self.btn_stop.setEnabled(False)
         self.btn_start.clicked.connect(self._start_rename)
