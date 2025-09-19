@@ -584,6 +584,9 @@ class MainWindow(QMainWindow):
         if not self._is_running or self._stop_event is None: return
         self._stop_event.set()
         self.logAppended.emit("已请求停止当前任务…")
+        # 立即更新按钮状态，给用户视觉反馈
+        self.btn_start.setEnabled(True)
+        self.btn_stop.setEnabled(False)
 
 
 def main() -> None:
