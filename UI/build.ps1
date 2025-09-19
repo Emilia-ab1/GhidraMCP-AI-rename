@@ -64,6 +64,11 @@ if (Test-Path $specPath) {
         --add-data "ai_rename.py;." `
         --add-data "startup_checker.py;." `
         --add-data "res\logo.ico;res" `
+        --collect-all "PyQt6" `
+        --collect-submodules "PyQt6" `
+        --collect-data "certifi" `
+        --collect-submodules "requests" `
+        --collect-submodules "mcp.server.fastmcp" `
         --hidden-import PyQt6 --hidden-import PyQt6.QtCore --hidden-import PyQt6.QtGui --hidden-import PyQt6.QtWidgets `
         --hidden-import openai --hidden-import requests --hidden-import mcp.server.fastmcp --hidden-import dotenv `
         "ghidra_ai_gui.py"

@@ -17,6 +17,7 @@ from PyQt6.QtWidgets import (
     QTextEdit,
 )
 import threading
+import os
 
 from startup_checker import check_connection_and_count
 try:
@@ -24,6 +25,11 @@ try:
     from ai_rename import run_rename
 except Exception:
     run_rename = None
+
+# 资源路径（确保从任意工作目录启动都能找到图标；兼容 PyInstaller 的 _MEIPASS）
+APP_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_PATH = getattr(sys, "_MEIPASS", APP_DIR)
+APP_ICON = os.path.join(BASE_PATH, "res", "logo.ico")
 
 
 class AppleStyle:
@@ -82,7 +88,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle("Ghidra-AI重命名  by：GuanYue233")
         self.setMinimumSize(800, 520)
-        self.setWindowIcon(QIcon("res/logo.ico"))
+        self.setWindowIcon(QIcon(APP_ICON))
 
         self._is_running = False
         self._stop_event = None
@@ -372,7 +378,7 @@ class MainWindow(QMainWindow):
 
 def main() -> None:
     app = QApplication(sys.argv)
-    app.setWindowIcon(QIcon("res/logo.ico"))
+    app.setWindowIcon(QIcon(APP_ICON))
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
