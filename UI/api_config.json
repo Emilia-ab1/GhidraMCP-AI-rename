@@ -1,24 +1,10 @@
 {
-  "api_key": "444",
-  "api_base": "https://api.siliconflow.cn/",
-  "model_name": "Qwen/Qwen2.5-72B-Instruct",
-  "api_key_history": [
-    "444",
-    "4",
-    "44",
-    "444 y",
-    "3",
-    "33",
-    "334",
-    "3342",
-    "33424",
-    "334242"
-  ],
-  "api_base_history": [
-    "https://api.siliconflow.cn/",
-    "https://api.siliconflow.cn"
-  ],
-  "model_name_history": [
-    "Qwen/Qwen2.5-72B-Instruct"
-  ]
+  "last_selected_profile": "2",
+  "profiles": {
+    "2": {
+      "api_key": "3",
+      "api_base": "https://api.siliconflow.cn/",
+      "model_name": "Qwen/Qwen2.5-72B-Instruct"
+    }
+  }
 }
