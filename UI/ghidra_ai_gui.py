@@ -1,7 +1,7 @@
 import sys
 import json
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont, QPalette, QColor, QIcon
+from PyQt6.QtGui import QFont, QPalette, QColor, QIcon, QIntValidator
 from PyQt6.QtWidgets import (
     QApplication,
     QFormLayout,
@@ -32,10 +32,16 @@ try:
 except Exception:
     run_rename = None
 
+# 资源路径与配置路径定义
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
-BASE_PATH = getattr(sys, "_MEIPASS", APP_DIR)
+BASE_PATH = getattr(sys, "_MEIPASS", APP_DIR) # PyInstaller临时路径
 APP_ICON = os.path.join(BASE_PATH, "res", "logo.ico")
-CONFIG_FILE = os.path.join(APP_DIR, "api_config.json")
+
+# 方案二：将配置文件保存在用户的AppData目录
+APP_NAME = "GhidraAiRename"
+APP_DATA_DIR = os.path.join(os.environ['LOCALAPPDATA'], APP_NAME)
+os.makedirs(APP_DATA_DIR, exist_ok=True) # 确保目录存在
+CONFIG_FILE = os.path.join(APP_DATA_DIR, "api_config.json")
 
 
 class ConfigManager:
@@ -59,7 +65,9 @@ class ConfigManager:
                 "Default": {
                     "api_key": "",
                     "api_base": "https://api.siliconflow.cn/",
-                    "model_name": "Qwen/Qwen2.5-72B-Instruct"
+                    "model_name": "Qwen/Qwen2.5-72B-Instruct",
+                    "batch_size": 50,
+                    "delay_ms": 1000
                 }
             }
         }
@@ -79,7 +87,7 @@ class ConfigManager:
         config = self.load_config()
         return config.get("profiles", {}).get(name)
 
-    def save_profile(self, name: str, api_key: str, api_base: str, model_name: str) -> None:
+    def save_profile(self, name: str, api_key: str, api_base: str, model_name: str, batch_size: int, delay_ms: int) -> None:
         if not name or not name.strip():
             return
         config = self.load_config()
@@ -88,7 +96,9 @@ class ConfigManager:
         config["profiles"][name] = {
             "api_key": api_key,
             "api_base": api_base,
-            "model_name": model_name
+            "model_name": model_name,
+            "batch_size": batch_size,
+            "delay_ms": delay_ms
         }
         self.save_config(config)
 
@@ -284,25 +294,24 @@ class MainWindow(QMainWindow):
         keyword_layout.addStretch(1)
         batch_delay_layout = QHBoxLayout()
         batch_delay_layout.setSpacing(8)
+        # 每批大小
         batch_layout = QHBoxLayout()
         batch_layout.setSpacing(4)
         batch_layout.addWidget(QLabel("每批大小:"))
-        self.spin_batch = QSpinBox()
-        self.spin_batch.setRange(1, 10000)
-        self.spin_batch.setValue(50)
-        self.spin_batch.setSingleStep(50)
-        self.spin_batch.setMinimumWidth(80)
-        batch_layout.addWidget(self.spin_batch)
+        self.input_batch = QLineEdit()
+        self.input_batch.setValidator(QIntValidator(1, 10000, self))
+        self.input_batch.setMinimumWidth(80)
+        batch_layout.addWidget(self.input_batch)
         batch_layout.addStretch(1)
+        
+        # 处理延迟
         delay_layout = QHBoxLayout()
         delay_layout.setSpacing(4)
         delay_layout.addWidget(QLabel("处理延迟 (ms):"))
-        self.spin_delay_ms = QSpinBox()
-        self.spin_delay_ms.setRange(0, 60000)
-        self.spin_delay_ms.setValue(1000)
-        self.spin_delay_ms.setSingleStep(100)
-        self.spin_delay_ms.setMinimumWidth(80)
-        delay_layout.addWidget(self.spin_delay_ms)
+        self.input_delay_ms = QLineEdit()
+        self.input_delay_ms.setValidator(QIntValidator(0, 60000, self))
+        self.input_delay_ms.setMinimumWidth(80)
+        delay_layout.addWidget(self.input_delay_ms)
         delay_layout.addStretch(1)
         batch_delay_layout.addLayout(batch_layout)
         batch_delay_layout.addLayout(delay_layout)
@@ -408,6 +417,8 @@ class MainWindow(QMainWindow):
             self.input_apikey.setText(profile.get("api_key", ""))
             self.input_apibase.setText(profile.get("api_base", ""))
             self.input_model.setText(profile.get("model_name", ""))
+            self.input_batch.setText(str(profile.get("batch_size", 50)))
+            self.input_delay_ms.setText(str(profile.get("delay_ms", 1000)))
             self.config_manager.set_last_selected_profile(name)
             self.logAppended.emit(f"已加载配置: {name}")
 
@@ -436,8 +447,10 @@ class MainWindow(QMainWindow):
             api_key = self.input_apikey.text().strip()
             api_base = self.input_apibase.text().strip()
             model_name = self.input_model.text().strip()
+            batch_size = int(self.input_batch.text() or 50)
+            delay_ms = int(self.input_delay_ms.text() or 1000)
             
-            self.config_manager.save_profile(text, api_key, api_base, model_name)
+            self.config_manager.save_profile(text, api_key, api_base, model_name, batch_size, delay_ms)
             self.logAppended.emit(f"配置已保存: {text}")
             self.current_profile_display.setText(text)
             self.config_manager.set_last_selected_profile(text)
@@ -524,8 +537,8 @@ class MainWindow(QMainWindow):
         api_base = self.input_apibase.text().strip()
         model_name = self.input_model.text().strip()
         pattern = self.input_mode.text().strip()
-        batch_size = int(self.spin_batch.value())
-        delay_seconds = int(self.spin_delay_ms.value()) / 1000.0
+        batch_size = int(self.input_batch.text() or 50)
+        delay_seconds = (int(self.input_delay_ms.text() or 1000)) / 1000.0
 
         self._is_running = True
         self._stop_event = threading.Event()
