@@ -29,8 +29,8 @@ if (!(Test-Path $venvPython)) {
     & $PythonExe -m venv "$venvPath"
 }
 
-Write-Info "升级 pip"
-& $venvPython -m pip install -U pip wheel setuptools
+#Write-Info "升级 pip"
+#& $venvPython -m pip install -U pip wheel setuptools
 
 # 2) 安装依赖
 $reqFile = Join-Path $scriptDir "requirements.txt"
@@ -43,8 +43,8 @@ if (Test-Path $reqFile) {
 }
 
 # 3) 安装 PyInstaller
-Write-Info "安装 PyInstaller"
-& $venvPython -m pip install pyinstaller
+#Write-Info "安装 PyInstaller"
+#& $venvPython -m pip install pyinstaller
 
 # 4) 运行打包
 Write-Info "运行 PyInstaller 构建"
