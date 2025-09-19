@@ -161,6 +161,7 @@ class ProfileSelectorDialog(QDialog):
     @staticmethod
     def get_profile(profiles: list[str], current: str, parent=None) -> str | None:
         dialog = ProfileSelectorDialog(profiles, current, parent)
+        AppleStyle.apply(dialog)
         if dialog.exec():
             return dialog.selected_profile
         return None
@@ -185,25 +186,15 @@ class AppleStyle:
         font.setFamily("Segoe UI" if sys.platform.startswith("win") else font.family())
         font.setPointSize(10)
         app.setFont(font)
-        widget.setStyleSheet(
-            """
-            QWidget { background-color: #F5F5F7; }
-            QGroupBox { border: 1px solid #E5E5EA; border-radius: 8px; margin-top: 12px; padding: 12px; }
-            QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 4px; color: #1C1C1E; }
-            QLabel { color: #1C1C1E; }
-            QLineEdit { background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 8px; padding: 6px 10px; }
-            QLineEdit:focus { border: 1px solid #007AFF; }
-            QSpinBox { background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 8px; padding: 6px 10px; }
-            QSpinBox:focus { border: 1px solid #007AFF; }
-            QComboBox { background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 8px; padding: 6px 10px; min-width: 60px; }
-            QComboBox:focus { border: 1px solid #007AFF; }
-            QProgressBar { border: 1px solid #E5E5EA; border-radius: 8px; background: #FFFFFF; text-align: center; }
-            QProgressBar::chunk { background-color: #0A84FF; border-radius: 8px; }
-            QPushButton { background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 8px; padding: 6px 12px; }
-            QPushButton:hover { border: 1px solid #007AFF; }
-            QTextEdit { background: #FFFFFF; border: 1px solid #E5E5EA; border-radius: 8px; padding: 8px; }
-            """
-        )
+        
+        # Load stylesheet from external file
+        try:
+            style_file_path = os.path.join(APP_DIR, "style.qss")
+            with open(style_file_path, "r", encoding="utf-8") as f:
+                widget.setStyleSheet(f.read())
+        except Exception as e:
+            # Fallback or logging
+            print(f"Error loading stylesheet: {e}")
 
 
 class MainWindow(QMainWindow):
@@ -255,6 +246,7 @@ class MainWindow(QMainWindow):
         profile_row_layout = QHBoxLayout()
         self.current_profile_display = QLineEdit()
         self.current_profile_display.setReadOnly(True)
+        self.current_profile_display.setObjectName("read_only_display")
         self.btn_select_profile = QPushButton("选择配置")
         self.btn_select_profile.clicked.connect(self._open_profile_selector)
         profile_row_layout.addWidget(self.current_profile_display, 1)
@@ -274,8 +266,10 @@ class MainWindow(QMainWindow):
         profile_actions_layout = QHBoxLayout()
         profile_actions_layout.addStretch()
         self.btn_save_config = QPushButton("保存当前配置")
+        self.btn_save_config.setObjectName("primary_button")
         self.btn_save_config.clicked.connect(self._save_profile)
         self.btn_delete_config = QPushButton("删除当前配置")
+        self.btn_delete_config.setObjectName("destructive_button")
         self.btn_delete_config.clicked.connect(self._delete_profile)
         profile_actions_layout.addWidget(self.btn_save_config)
         profile_actions_layout.addWidget(self.btn_delete_config)
@@ -350,6 +344,7 @@ class MainWindow(QMainWindow):
         row_ctrl = QHBoxLayout()
         row_ctrl.setSpacing(8)
         self.btn_start = QPushButton("开始重命名")
+        self.btn_start.setObjectName("primary_button")
         self.btn_start.setMinimumWidth(80)
         self.btn_stop = QPushButton("停止")
         self.btn_stop.setMinimumWidth(60)
@@ -434,6 +429,7 @@ class MainWindow(QMainWindow):
         current_name = self.current_profile_display.text()
         
         dialog = QInputDialog(self)
+        AppleStyle.apply(dialog)
         dialog.setWindowTitle("保存配置")
         dialog.setLabelText("输入配置名称:")
         dialog.setTextValue(current_name)
@@ -460,6 +456,7 @@ class MainWindow(QMainWindow):
         if not name: return
 
         msg_box = QMessageBox(self)
+        AppleStyle.apply(msg_box)
         msg_box.setWindowTitle("删除配置")
         msg_box.setText(f"确定要删除配置 '{name}' 吗？")
         msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
