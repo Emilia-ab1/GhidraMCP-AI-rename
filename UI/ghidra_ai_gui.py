@@ -540,9 +540,16 @@ class MainWindow(QMainWindow):
             self.label_status.setStyleSheet("color: #DC3545; font-weight: 600;")
 
     def _start_rename(self) -> None:
-        if self._is_running: return
+        # 双重检查状态，确保不会重复启动
+        if self._is_running: 
+            self.logAppended.emit("任务已在运行中…")
+            return
         if run_rename is None:
             self.logAppended.emit("未找到重命名入口(run_rename)。请确认脚本可导入。")
+            # 重置按钮状态
+            self.btn_start.setEnabled(True)
+            self.btn_stop.setEnabled(False)
+            self._is_running = False
             return
 
         api_key = self.input_apikey.text().strip()
@@ -587,6 +594,8 @@ class MainWindow(QMainWindow):
         # 立即更新按钮状态，给用户视觉反馈
         self.btn_start.setEnabled(True)
         self.btn_stop.setEnabled(False)
+        # 确保状态标志也被正确设置
+        self._is_running = False
 
 
 def main() -> None:

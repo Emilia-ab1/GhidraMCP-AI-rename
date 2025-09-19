@@ -184,7 +184,8 @@ def process_functions(config: dict, client, model_name: str, functions: list, on
 
     try:
         for func_name in functions:
-            if stop_event is not None and getattr(stop_event, "is_set", lambda: False)():
+            # 检查停止信号
+            if stop_event is not None and hasattr(stop_event, 'is_set') and stop_event.is_set():
                 emit_log("\n收到停止信号，提前结束处理。")
                 break
 
