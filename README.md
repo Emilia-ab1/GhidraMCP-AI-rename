@@ -17,10 +17,10 @@ UI目录下提供了一个图形界面工具，可以更方便地配置和运行
 
 在UI目录下提供了PowerShell脚本 `build.ps1`用于打包GUI应用程序。该脚本会使用PyInstaller将Python代码打包成Windows可执行文件。
 
-打包步骤：
+~~打包步骤：~~
 
-1. 确保已安装Python 3.10+和pip
-2. 在UI目录下运行以下命令安装依赖：
+1. ~~确保已安装Python 3.10+和pip~~
+2. ~~在UI目录下运行以下命令安装依赖：~~
    ```
    pip install -r requirements.txt
    ```
@@ -34,7 +34,7 @@ UI目录下提供了一个图形界面工具，可以更方便地配置和运行
 
 1. 运行打包好的 `Ghidra-AI-Rename-GUI.exe`文件
 2. 在API配置区域填写以下信息：
-   - API密钥：硅基流动平台的API密钥
+   - API密钥：硅基流动平台的API密钥（没有可以点击"去注册"）
    - API网址：默认为 `https://api.siliconflow.cn/`
    - 模型名称：默认为 `Qwen/Qwen2.5-72B-Instruct`
 3. 在处理参数区域配置：
