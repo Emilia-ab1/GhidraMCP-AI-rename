@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/guanyue91141-ghidramcp-ai-rename-badge.png)](https://mseep.ai/app/guanyue91141-ghidramcp-ai-rename)
+
 # Ghidra逆向
 
 ## 9月20日更新说明
