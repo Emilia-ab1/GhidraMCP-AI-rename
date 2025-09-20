@@ -172,7 +172,7 @@ class AboutDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("关于")
-        self.setFixedSize(400, 500)
+        self.setFixedSize(400, 550)
         
         layout = QVBoxLayout(self)
         
@@ -221,10 +221,29 @@ class AboutDialog(QDialog):
             
         layout.addWidget(pay_image_label)
         
+        # 分隔线
+        line2 = QWidget()
+        line2.setFixedHeight(1)
+        line2.setStyleSheet("background-color: #E5E5EA;")
+        layout.addWidget(line2)
+        
+        # 开源信息
+        open_source_label = QLabel("本项目已开源到GitHub:")
+        open_source_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(open_source_label)
+        
+        self.btn_github = QPushButton("访问GitHub仓库")
+        self.btn_github.clicked.connect(self._open_github)
+        layout.addWidget(self.btn_github)
+        
         # 关闭按钮
         close_button = QPushButton("关闭")
         close_button.clicked.connect(self.accept)
         layout.addWidget(close_button)
+        
+    def _open_github(self):
+        """打开GitHub仓库页面"""
+        webbrowser.open("https://github.com/guanyue91141/GhidraMCP-AI-rename")
 
 
 class AppleStyle:
@@ -276,7 +295,8 @@ class MainWindow(QMainWindow):
         'blue': "QPushButton { background-color: #007AFF; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #0056b3; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
         'red': "QPushButton { background-color: #DC3545; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #C82333; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
         'yellow': "QPushButton { background-color: #FFC110; color: black; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #E0A800; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
-        'orange': "QPushButton { background-color: #FFA500; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #FF8C00; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }"
+        'orange': "QPushButton { background-color: #FFA500; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #FF8C00; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
+        'pink': "QPushButton { background-color: #FF69B4; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #FF1493; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }"
     }
 
     def __init__(self) -> None:
@@ -438,7 +458,7 @@ class MainWindow(QMainWindow):
         row_ctrl.addWidget(self.btn_stop)
         row_ctrl.addStretch(1)
         self.btn_about = QPushButton("关于")
-        self.btn_about.setStyleSheet(self.BUTTON_STYLES['orange'])
+        self.btn_about.setStyleSheet(self.BUTTON_STYLES['pink'])
         self.btn_about.clicked.connect(self._show_about_dialog)
         row_ctrl.addWidget(self.btn_about)
         self.progress = QProgressBar()
