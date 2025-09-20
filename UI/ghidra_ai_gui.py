@@ -1,7 +1,8 @@
 import sys
 import json
+import webbrowser
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QFont, QPalette, QColor, QIcon, QIntValidator
+from PyQt6.QtGui import QFont, QPalette, QColor, QIcon, QIntValidator, QPixmap
 from PyQt6.QtWidgets import (
     QApplication,
     QFormLayout,
@@ -166,6 +167,66 @@ class ProfileSelectorDialog(QDialog):
         return None
 
 
+class AboutDialog(QDialog):
+    """关于对话框，显示赞赏码和感谢信息"""
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("关于")
+        self.setFixedSize(400, 500)
+        
+        layout = QVBoxLayout(self)
+        
+        # 标题
+        title_label = QLabel("Ghidra-AI重命名工具")
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        title_font = QFont()
+        title_font.setPointSize(14)
+        title_font.setBold(True)
+        title_label.setFont(title_font)
+        layout.addWidget(title_label)
+        
+        # 作者信息
+        author_label = QLabel("by：GuanYue233")
+        author_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(author_label)
+        
+        # 分隔线
+        line = QWidget()
+        line.setFixedHeight(1)
+        line.setStyleSheet("background-color: #E5E5EA;")
+        layout.addWidget(line)
+        
+        # 感谢文字
+        thanks_label = QLabel(
+            "感谢您使用本工具！如果您觉得这个工具对您有帮助，"
+            "欢迎通过以下赞赏码支持开发者的工作。您的支持是我持续改进的动力！"
+        )
+        thanks_label.setWordWrap(True)
+        thanks_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(thanks_label)
+        
+        # 赞赏码图片
+        pay_image_label = QLabel()
+        pay_image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        # 加载图片
+        image_path = os.path.join(BASE_PATH, "res", "pay.JPG")
+        if os.path.exists(image_path):
+            pixmap = QPixmap(image_path)
+            # 缩放图片到合适大小
+            scaled_pixmap = pixmap.scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            pay_image_label.setPixmap(scaled_pixmap)
+        else:
+            pay_image_label.setText("赞赏码图片未找到")
+            
+        layout.addWidget(pay_image_label)
+        
+        # 关闭按钮
+        close_button = QPushButton("关闭")
+        close_button.clicked.connect(self.accept)
+        layout.addWidget(close_button)
+
+
 class AppleStyle:
     @staticmethod
     def apply(widget: QWidget) -> None:
@@ -215,6 +276,7 @@ class MainWindow(QMainWindow):
         'blue': "QPushButton { background-color: #007AFF; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #0056b3; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
         'red': "QPushButton { background-color: #DC3545; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #C82333; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
         'yellow': "QPushButton { background-color: #FFC110; color: black; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #E0A800; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }",
+        'orange': "QPushButton { background-color: #FFA500; color: white; border: none; border-radius: 8px; padding: 6px 12px; } QPushButton:hover { background-color: #FF8C00; } QPushButton:disabled { background-color: #A0A0A0; color: #E0E0E0; }"
     }
 
     def __init__(self) -> None:
@@ -276,16 +338,20 @@ class MainWindow(QMainWindow):
         self.input_model.setPlaceholderText("例如：Qwen/Qwen2.5-72B-Instruct")
         api_form.addRow(QLabel("API密钥"), self.input_apikey)
         api_form.addRow(QLabel("API网址"), self.input_apibase)
-        api_form.addRow(QLabel("MODEL名称"), self.input_model)
+        api_form.addRow(QLabel("模型名称"), self.input_model)
 
         profile_actions_layout = QHBoxLayout()
         profile_actions_layout.addStretch()
-        self.btn_save_config = QPushButton("保存当前配置")
+        self.btn_register = QPushButton("去注册")
+        self.btn_register.setStyleSheet(self.BUTTON_STYLES['orange'])
+        self.btn_register.clicked.connect(self._open_registration)
+        self.btn_save_config = QPushButton("保存当前")
         self.btn_save_config.setStyleSheet(self.BUTTON_STYLES['blue'])
         self.btn_save_config.clicked.connect(self._save_profile)
-        self.btn_delete_config = QPushButton("删除当前配置")
+        self.btn_delete_config = QPushButton("删除当前")
         self.btn_delete_config.setStyleSheet(self.BUTTON_STYLES['red'])
         self.btn_delete_config.clicked.connect(self._delete_profile)
+        profile_actions_layout.addWidget(self.btn_register)
         profile_actions_layout.addWidget(self.btn_save_config)
         profile_actions_layout.addWidget(self.btn_delete_config)
         api_form.addRow("", profile_actions_layout)
@@ -371,6 +437,10 @@ class MainWindow(QMainWindow):
         row_ctrl.addWidget(self.btn_start)
         row_ctrl.addWidget(self.btn_stop)
         row_ctrl.addStretch(1)
+        self.btn_about = QPushButton("关于")
+        self.btn_about.setStyleSheet(self.BUTTON_STYLES['orange'])
+        self.btn_about.clicked.connect(self._show_about_dialog)
+        row_ctrl.addWidget(self.btn_about)
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
         self.progress.setValue(0)
@@ -597,6 +667,14 @@ class MainWindow(QMainWindow):
         # 确保状态标志也被正确设置
         self._is_running = False
 
+    def _show_about_dialog(self) -> None:
+        """显示关于对话框"""
+        dialog = AboutDialog(self)
+        dialog.exec()
+
+    def _open_registration(self) -> None:
+        """打开注册页面"""
+        webbrowser.open("https://cloud.siliconflow.cn/i/ojNQ9gQJ")
 
 def main() -> None:
     app = QApplication(sys.argv)
